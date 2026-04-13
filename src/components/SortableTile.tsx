@@ -2,10 +2,11 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { ReactNode } from 'react';
 
+type SortableReturn = ReturnType<typeof useSortable>;
 export type DragHandleProps = {
-  ref: (el: HTMLElement | null) => void;
-  attributes: Record<string, unknown>;
-  listeners: Record<string, unknown> | undefined;
+  ref: SortableReturn['setActivatorNodeRef'];
+  attributes: SortableReturn['attributes'];
+  listeners: SortableReturn['listeners'];
 };
 
 type Props = {
@@ -35,8 +36,8 @@ export default function SortableTile({ id, children }: Props) {
     <div ref={setNodeRef} style={style}>
       {children({
         ref: setActivatorNodeRef,
-        attributes: attributes as Record<string, unknown>,
-        listeners: listeners as Record<string, unknown> | undefined,
+        attributes,
+        listeners,
       })}
     </div>
   );

@@ -86,12 +86,13 @@ const Toolbar = forwardRef<HTMLInputElement, Props>(function Toolbar(
           <select
             value={layout}
             onChange={e => onLayoutChange(e.target.value as Layout)}
-            className="px-2 py-2 rounded-md bg-white/5 border border-white/10 text-sm"
+            className="px-2 py-2 rounded-md border border-white/10 text-sm text-neutral-100"
+            style={{ backgroundColor: '#1a1a1a', colorScheme: 'dark' }}
             title="Layout"
           >
-            <option value="grid">Grid</option>
-            <option value="focus">Focus</option>
-            <option value="theater">Theater</option>
+            <option value="grid" style={{ background: '#1a1a1a', color: '#f5f5f5' }}>Grid</option>
+            <option value="focus" style={{ background: '#1a1a1a', color: '#f5f5f5' }}>Focus</option>
+            <option value="theater" style={{ background: '#1a1a1a', color: '#f5f5f5' }}>Theater</option>
           </select>
           <button className="tb-btn" onClick={onMuteAll} title="Mute all (m)">🔇 All</button>
           <button className="tb-btn" onClick={onUnmuteAll} title="Unmute all (u)">🔊 All</button>

@@ -20,12 +20,17 @@ export default function ChatPanel({ streams, chatUsername, parent, onClose, onPi
         <select
           value={current || ''}
           onChange={e => onPick(e.target.value)}
-          className="flex-1 min-w-0 px-2 py-1.5 rounded-md bg-white/5 border border-white/10 text-sm"
+          className="flex-1 min-w-0 px-2 py-1.5 rounded-md border border-white/10 text-sm text-neutral-100"
+          style={{ backgroundColor: '#1a1a1a', colorScheme: 'dark' }}
           disabled={streams.length === 0}
         >
-          {streams.length === 0 && <option value="">No streams</option>}
+          {streams.length === 0 && (
+            <option value="" style={{ background: '#1a1a1a', color: '#f5f5f5' }}>No streams</option>
+          )}
           {streams.map(s => (
-            <option key={s.id} value={s.username}>{s.username}</option>
+            <option key={s.id} value={s.username} style={{ background: '#1a1a1a', color: '#f5f5f5' }}>
+              {s.username}
+            </option>
           ))}
         </select>
         <button

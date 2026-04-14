@@ -3,7 +3,7 @@ import type { AppState, Layout, Stream } from './types';
 import { isValidUsername, normalizeUsername } from './utils/validation';
 import { readUrl, useUrlSync } from './hooks/useUrlSync';
 import Toolbar from './components/Toolbar';
-import StreamGrid from './components/StreamGrid';
+import StreamStage from './components/StreamStage';
 import ChatPanel from './components/ChatPanel';
 import EmptyState from './components/EmptyState';
 import PresetMenu from './components/PresetMenu';
@@ -147,12 +147,6 @@ export default function App() {
             chatUsername: s?.username ?? prev.chatUsername,
           };
         }),
-      onReorder: (ids: string[]) =>
-        setState(prev => {
-          const map = new Map(prev.streams.map(s => [s.id, s]));
-          const reordered = ids.map(id => map.get(id)).filter((s): s is Stream => !!s);
-          return { ...prev, streams: reordered };
-        }),
     }),
     [closeStream]
   );
@@ -277,7 +271,7 @@ export default function App() {
       />
       <main className="flex-1 flex flex-col lg:flex-row min-h-0">
         {hasStreams ? (
-          <StreamGrid
+          <StreamStage
             streams={state.streams}
             parent={parent}
             layout={state.layout}

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Stream } from '../types';
 import StreamTile from './StreamTile';
 import { computeRects } from '../utils/layout';
+import { useTileDrag } from '../hooks/useTileDrag';
 
 type Actions = {
   onToggleMute: (id: string) => void;
@@ -9,6 +10,7 @@ type Actions = {
   onToggleHideVideo: (id: string) => void;
   onClose: (id: string) => void;
   onFocus: (id: string) => void;
+  onReorder: (fromId: string, toId: string) => void;
 };
 
 type Props = {
@@ -92,6 +94,9 @@ export default function StreamStage({
       ? focusedId
       : active[0]?.id ?? null;
 
+  const drag = useTileDrag(actions.onReorder);
+  const dndEnabled = layout === 'grid' && active.length >= 2;
+
   return (
     <div className="flex-1 flex flex-col min-h-0">
       {minimized.length > 0 && (
@@ -116,24 +121,35 @@ export default function StreamStage({
           const r = rects[s.id];
           if (!r) return null;
           const pad = GAP;
+          const dragging = drag.isDragging(s.id);
+          const over = drag.isOver(s.id);
+          const offset = drag.dragOffset(s.id);
           const style: React.CSSProperties = {
             position: 'absolute',
             left: `calc(${r.x}% + ${pad}%)`,
             top: `calc(${r.y}% + ${pad}%)`,
             width: `calc(${r.w}% - ${pad * 2}%)`,
             height: `calc(${r.h}% - ${pad * 2}%)`,
-            transition: 'left 250ms ease, top 250ms ease, width 250ms ease, height 250ms ease, opacity 200ms ease',
-            opacity: r.hidden ? 0 : 1,
+            transition: dragging
+              ? 'none'
+              : 'left 250ms ease, top 250ms ease, width 250ms ease, height 250ms ease, opacity 200ms ease',
+            opacity: r.hidden ? 0 : dragging ? 0.85 : 1,
             pointerEvents: r.hidden ? 'none' : 'auto',
-            zIndex: s.id === focusedActive ? 2 : 1,
+            zIndex: dragging ? 50 : s.id === focusedActive ? 2 : 1,
+            transform: offset
+              ? `translate(${offset.x}px, ${offset.y}px) scale(1.02)`
+              : undefined,
+            outline: over ? '2px solid var(--color-accent)' : undefined,
+            outlineOffset: over ? '2px' : undefined,
           };
           const isThumbnail = layout !== 'grid' && s.id !== focusedActive;
           return (
-            <div key={s.id} style={style}>
+            <div key={s.id} style={style} data-stream-tile={s.id}>
               <StreamTile
                 stream={s}
                 parent={parent}
                 thumbnail={isThumbnail}
+                dragHandleProps={dndEnabled ? drag.getHandleProps(s.id) : undefined}
                 onToggleMute={() => actions.onToggleMute(s.id)}
                 onToggleMinimize={() => actions.onToggleMinimize(s.id)}
                 onToggleHideVideo={() => actions.onToggleHideVideo(s.id)}

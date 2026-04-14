@@ -147,6 +147,16 @@ export default function App() {
             chatUsername: s?.username ?? prev.chatUsername,
           };
         }),
+      onReorder: (fromId: string, toId: string) =>
+        setState(prev => {
+          const from = prev.streams.findIndex(s => s.id === fromId);
+          const to = prev.streams.findIndex(s => s.id === toId);
+          if (from < 0 || to < 0 || from === to) return prev;
+          const next = prev.streams.slice();
+          const [moved] = next.splice(from, 1);
+          next.splice(to, 0, moved);
+          return { ...prev, streams: next };
+        }),
     }),
     [closeStream]
   );

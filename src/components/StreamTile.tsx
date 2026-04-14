@@ -7,6 +7,7 @@ type Props = {
   stream: Stream;
   parent: string;
   thumbnail?: boolean;
+  dragHandleProps?: React.HTMLAttributes<HTMLButtonElement>;
   onToggleMute: () => void;
   onToggleMinimize: () => void;
   onToggleHideVideo: () => void;
@@ -18,6 +19,7 @@ export default function StreamTile({
   stream,
   parent,
   thumbnail = false,
+  dragHandleProps,
   onToggleMute,
   onToggleMinimize,
   onToggleHideVideo,
@@ -86,6 +88,17 @@ export default function StreamTile({
       <div className="absolute top-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-sm font-semibold tracking-tight pointer-events-none">
         {stream.username}
       </div>
+
+      {dragHandleProps && (
+        <button
+          {...dragHandleProps}
+          aria-label="Drag to reorder"
+          title="Drag to reorder"
+          className="absolute top-2 left-2 z-20 inline-flex items-center justify-center min-h-9 min-w-9 px-2 rounded-md bg-black/60 backdrop-blur text-neutral-200 hover:bg-black/80 border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing touch-none"
+        >
+          ⠿
+        </button>
+      )}
 
       <StreamControls
         stream={stream}

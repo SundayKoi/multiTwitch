@@ -1,6 +1,7 @@
 import { forwardRef, useState, type ReactNode } from 'react';
 import type { Layout, Stream } from '../types';
 import { isValidUsername, normalizeUsername } from '../utils/validation';
+import AdBlockHelp from './AdBlockHelp';
 
 type Props = {
   streams: Stream[];
@@ -104,6 +105,7 @@ const Toolbar = forwardRef<HTMLInputElement, Props>(function Toolbar(
             💬 Chat
           </button>
           <button className="tb-btn" onClick={onShare} title="Copy shareable link">🔗 Share</button>
+          <AdBlockHelp />
           {presetSlot}
           {streams.length > 0 && (
             <button

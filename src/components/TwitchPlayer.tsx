@@ -44,17 +44,32 @@ export default function TwitchPlayer({ channel, parent, muted, hidden }: Props) 
   const playerRef = useRef<TwitchPlayerApi | null>(null);
   const initStarted = useRef(false);
   const latestMuted = useRef(muted);
+  const resumeTimer = useRef<number | null>(null);
+  // Twitch.Player wants a DOM id, not an element — generate a stable one.
+  const idRef = useRef('twitch-player-' + Math.random().toString(36).slice(2, 9));
 
   useEffect(() => {
     if (initStarted.current) return;
     initStarted.current = true;
     let cancelled = false;
 
+    // Resume playback whenever the player pauses without us asking. This app
+    // never pauses streams itself, so any pause (tab switch, focus loss, the
+    // player's own idle behaviour) is unwanted — kick it back to playing.
+    const resume = () => {
+      if (cancelled) return;
+      if (resumeTimer.current) window.clearTimeout(resumeTimer.current);
+      resumeTimer.current = window.setTimeout(() => {
+        if (document.visibilityState !== 'visible') return;
+        try { playerRef.current?.play(); } catch { /* ignore */ }
+      }, 200);
+    };
+
     loadSDK()
       .then(() => {
         if (cancelled || !hostRef.current || !window.Twitch?.Player) return;
         const Player = window.Twitch.Player;
-        const player = new Player(hostRef.current, {
+        const player = new Player(idRef.current, {
           width: '100%',
           height: '100%',
           channel,
@@ -66,11 +81,13 @@ export default function TwitchPlayer({ channel, parent, muted, hidden }: Props) 
         player.addEventListener(Player.READY, () => {
           try { player.setMuted(latestMuted.current); } catch { /* ignore */ }
         });
+        player.addEventListener(Player.PAUSE, resume);
       })
       .catch(() => { /* ignore */ });
 
     return () => {
       cancelled = true;
+      if (resumeTimer.current) window.clearTimeout(resumeTimer.current);
       const el = hostRef.current;
       if (el) el.innerHTML = '';
       playerRef.current = null;
@@ -85,8 +102,8 @@ export default function TwitchPlayer({ channel, parent, muted, hidden }: Props) 
     }
   }, [muted]);
 
-  // Safety net: if the player ever pauses on its own, resume it when the
-  // tab is visible again. The bare player rarely does this, but cheap.
+  // Resume when returning to the tab — a player paused while the tab was
+  // hidden may not fire an actionable event until it's visible again.
   useEffect(() => {
     const onVisible = () => {
       if (document.visibilityState !== 'visible') return;
@@ -99,6 +116,7 @@ export default function TwitchPlayer({ channel, parent, muted, hidden }: Props) 
   return (
     <div
       ref={hostRef}
+      id={idRef.current}
       className={
         'absolute inset-0 w-full h-full ' +
         (hidden ? 'opacity-0 pointer-events-none' : '')

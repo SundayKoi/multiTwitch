@@ -1,7 +1,7 @@
 export {};
 
-type TwitchPlayerApi = {
-  setMuted(m: boolean): void;
+type TwitchPlayerInstance = {
+  setMuted(muted: boolean): void;
   getMuted(): boolean;
   setVolume(v: number): void;
   play(): void;
@@ -9,38 +9,29 @@ type TwitchPlayerApi = {
   addEventListener(event: string, cb: () => void): void;
 };
 
-type TwitchEmbedInstance = {
-  getPlayer(): TwitchPlayerApi;
-  addEventListener(event: string, cb: () => void): void;
-  destroy?: () => void;
-};
-
-type TwitchEmbedOptions = {
+type TwitchPlayerOptions = {
   width: string | number;
   height: string | number;
   channel: string;
   parent?: string[];
   muted?: boolean;
   autoplay?: boolean;
-  layout?: 'video' | 'video-with-chat';
-  theme?: 'light' | 'dark';
 };
 
 declare global {
   interface Window {
     Twitch?: {
-      Embed: {
-        new (target: string | HTMLElement, options: TwitchEmbedOptions): TwitchEmbedInstance;
-        VIDEO_READY: string;
-        VIDEO_PLAY: string;
-        VIDEO_PAUSE: string;
-      };
-      Player?: {
+      Player: {
+        new (
+          target: string | HTMLElement,
+          options: TwitchPlayerOptions
+        ): TwitchPlayerInstance;
         READY: string;
         PLAY: string;
         PAUSE: string;
         ENDED: string;
         ONLINE: string;
+        OFFLINE: string;
       };
     };
   }

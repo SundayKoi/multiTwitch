@@ -6,22 +6,25 @@ type TwitchPlayerApi = {
   addEventListener(event: string, cb: () => void): void;
 };
 
+// Load the Twitch *Player* SDK (player.twitch.tv) — the bare player, which
+// keeps playing when the tab is backgrounded. The heavier Embed SDK
+// (embed.twitch.tv) pauses playback on tab/focus changes.
 let sdkPromise: Promise<void> | null = null;
 function loadSDK(): Promise<void> {
   if (sdkPromise) return sdkPromise;
   sdkPromise = new Promise((resolve, reject) => {
     if (typeof window === 'undefined') return resolve();
-    if (window.Twitch?.Embed) return resolve();
-    const existing = document.querySelector<HTMLScriptElement>('script[data-twitch-embed-sdk]');
+    if (window.Twitch?.Player) return resolve();
+    const existing = document.querySelector<HTMLScriptElement>('script[data-twitch-player-sdk]');
     if (existing) {
       existing.addEventListener('load', () => resolve());
       existing.addEventListener('error', () => reject(new Error('Twitch SDK failed to load')));
       return;
     }
     const s = document.createElement('script');
-    s.src = 'https://embed.twitch.tv/embed/v1.js';
+    s.src = 'https://player.twitch.tv/js/embed/v1.js';
     s.async = true;
-    s.dataset.twitchEmbedSdk = '1';
+    s.dataset.twitchPlayerSdk = '1';
     s.onload = () => resolve();
     s.onerror = () => reject(new Error('Twitch SDK failed to load'));
     document.head.appendChild(s);
@@ -41,7 +44,6 @@ export default function TwitchPlayer({ channel, parent, muted, hidden }: Props) 
   const playerRef = useRef<TwitchPlayerApi | null>(null);
   const initStarted = useRef(false);
   const latestMuted = useRef(muted);
-  const resumeTimer = useRef<number | null>(null);
 
   useEffect(() => {
     if (initStarted.current) return;
@@ -50,62 +52,30 @@ export default function TwitchPlayer({ channel, parent, muted, hidden }: Props) 
 
     loadSDK()
       .then(() => {
-        if (cancelled || !hostRef.current || !window.Twitch) return;
-        const embed = new window.Twitch.Embed(hostRef.current, {
+        if (cancelled || !hostRef.current || !window.Twitch?.Player) return;
+        const Player = window.Twitch.Player;
+        const player = new Player(hostRef.current, {
           width: '100%',
           height: '100%',
           channel,
           parent: [parent],
           muted: latestMuted.current,
           autoplay: true,
-          layout: 'video',
-          theme: 'dark',
         });
-        embed.addEventListener(window.Twitch.Embed.VIDEO_READY, () => {
-          try {
-            const p = embed.getPlayer() as TwitchPlayerApi;
-            playerRef.current = p;
-            p.setMuted(latestMuted.current);
-
-            // Twitch's embedded player pauses playback on its own when the
-            // tab is backgrounded, and sometimes on focus changes while
-            // hovering. This app never pauses streams itself, so treat any
-            // pause as unwanted and resume it once the tab is visible.
-            const Player = window.Twitch?.Player;
-            if (Player?.PAUSE) {
-              p.addEventListener(Player.PAUSE, () => {
-                if (cancelled) return;
-                if (document.visibilityState !== 'visible') return;
-                if (resumeTimer.current) window.clearTimeout(resumeTimer.current);
-                resumeTimer.current = window.setTimeout(() => {
-                  try { playerRef.current?.play(); } catch { /* ignore */ }
-                }, 250);
-              });
-            }
-          } catch { /* ignore */ }
+        playerRef.current = player;
+        player.addEventListener(Player.READY, () => {
+          try { player.setMuted(latestMuted.current); } catch { /* ignore */ }
         });
       })
       .catch(() => { /* ignore */ });
 
     return () => {
       cancelled = true;
-      if (resumeTimer.current) window.clearTimeout(resumeTimer.current);
       const el = hostRef.current;
       if (el) el.innerHTML = '';
       playerRef.current = null;
     };
   }, [channel, parent]);
-
-  // Resume playback when returning to the tab — Twitch pauses backgrounded
-  // embeds, and a paused-while-hidden player won't fire a useful event.
-  useEffect(() => {
-    const onVisible = () => {
-      if (document.visibilityState !== 'visible') return;
-      try { playerRef.current?.play(); } catch { /* ignore */ }
-    };
-    document.addEventListener('visibilitychange', onVisible);
-    return () => document.removeEventListener('visibilitychange', onVisible);
-  }, []);
 
   useEffect(() => {
     latestMuted.current = muted;
@@ -114,6 +84,17 @@ export default function TwitchPlayer({ channel, parent, muted, hidden }: Props) 
       try { p.setMuted(muted); } catch { /* ignore */ }
     }
   }, [muted]);
+
+  // Safety net: if the player ever pauses on its own, resume it when the
+  // tab is visible again. The bare player rarely does this, but cheap.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      try { playerRef.current?.play(); } catch { /* ignore */ }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, []);
 
   return (
     <div

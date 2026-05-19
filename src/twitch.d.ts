@@ -6,6 +6,7 @@ type TwitchPlayerApi = {
   setVolume(v: number): void;
   play(): void;
   pause(): void;
+  addEventListener(event: string, cb: () => void): void;
 };
 
 type TwitchEmbedInstance = {
@@ -32,6 +33,14 @@ declare global {
         new (target: string | HTMLElement, options: TwitchEmbedOptions): TwitchEmbedInstance;
         VIDEO_READY: string;
         VIDEO_PLAY: string;
+        VIDEO_PAUSE: string;
+      };
+      Player?: {
+        READY: string;
+        PLAY: string;
+        PAUSE: string;
+        ENDED: string;
+        ONLINE: string;
       };
     };
   }

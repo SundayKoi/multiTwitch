@@ -51,7 +51,7 @@ export default function StreamTile({
   }
 
   async function pip() {
-    const el = (document.activeElement as HTMLElement | null);
+    const el = document.activeElement as HTMLElement | null;
     const iframe = el?.closest('.tile-root')?.querySelector('iframe') as HTMLIFrameElement | null;
     if (!iframe) return;
     try {
@@ -65,50 +65,55 @@ export default function StreamTile({
 
   return (
     <div
-      className="tile-root relative w-full h-full rounded-xl overflow-hidden border border-white/10 bg-black hover:border-white/20 hover:shadow-2xl hover:shadow-black/50 transition-colors duration-150 group touch-pan-y"
+      className="tile-root relative w-full h-full rounded-xl overflow-hidden border border-white/10 bg-black hover:border-white/20 transition-colors duration-150 touch-pan-y"
       style={swipeX ? { transform: `translateX(${swipeX}px)` } : undefined}
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
     >
-      <TwitchPlayer
-        channel={stream.username}
-        parent={parent}
-        muted={stream.muted}
-        hidden={stream.hideVideo}
-      />
-
-      {stream.hideVideo && (
-        <div className="absolute inset-0 flex items-center justify-center bg-neutral-900 text-neutral-400 text-sm pointer-events-none">
-          Video hidden — audio still playing
-        </div>
-      )}
-
-      <div className="absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-      <div className="absolute top-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-sm font-semibold tracking-tight pointer-events-none">
-        {stream.username}
+      {/* Control bar — kept entirely above the video. Twitch pauses embeds
+          that are obscured by other page elements, so nothing may overlap
+          the player. */}
+      <div className="absolute inset-x-0 top-0 h-9 z-20 flex items-center gap-1 px-1.5 bg-neutral-950 border-b border-white/10">
+        {dragHandleProps && (
+          <button
+            {...dragHandleProps}
+            aria-label="Drag to reorder"
+            title="Drag to reorder"
+            className="shrink-0 inline-flex items-center justify-center h-7 w-7 rounded-md text-neutral-400 hover:text-neutral-100 hover:bg-white/10 cursor-grab active:cursor-grabbing touch-none"
+          >
+            ⠿
+          </button>
+        )}
+        <span className="min-w-0 flex-1 truncate px-1 text-sm font-semibold tracking-tight">
+          {stream.username}
+        </span>
+        <StreamControls
+          stream={stream}
+          onToggleMute={onToggleMute}
+          onToggleMinimize={onToggleMinimize}
+          onToggleHideVideo={onToggleHideVideo}
+          onClose={onClose}
+          onFocus={thumbnail ? onFocus : undefined}
+          onPip={pip}
+        />
       </div>
 
-      {dragHandleProps && (
-        <button
-          {...dragHandleProps}
-          aria-label="Drag to reorder"
-          title="Drag to reorder"
-          className="absolute top-2 left-2 z-20 inline-flex items-center justify-center min-h-9 min-w-9 px-2 rounded-md bg-black/60 backdrop-blur text-neutral-200 hover:bg-black/80 border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing touch-none"
-        >
-          ⠿
-        </button>
-      )}
+      {/* Video area — only the player lives here; nothing overlaps it. */}
+      <div className="absolute inset-x-0 bottom-0 top-9 bg-black">
+        <TwitchPlayer
+          channel={stream.username}
+          parent={parent}
+          muted={stream.muted}
+          hidden={stream.hideVideo}
+        />
 
-      <StreamControls
-        stream={stream}
-        onToggleMute={onToggleMute}
-        onToggleMinimize={onToggleMinimize}
-        onToggleHideVideo={onToggleHideVideo}
-        onClose={onClose}
-        onFocus={thumbnail ? onFocus : undefined}
-        onPip={pip}
-      />
+        {stream.hideVideo && (
+          <div className="absolute inset-0 flex items-center justify-center bg-neutral-900 text-neutral-400 text-sm pointer-events-none">
+            Video hidden — audio still playing
+          </div>
+        )}
+      </div>
     </div>
   );
 }

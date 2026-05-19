@@ -11,8 +11,11 @@ type Props = {
 };
 
 const btn =
-  'inline-flex items-center justify-center min-h-9 min-w-9 px-2 rounded-md bg-black/60 backdrop-blur text-neutral-200 hover:bg-black/80 hover:text-white border border-white/10 transition-colors';
+  'shrink-0 inline-flex items-center justify-center h-7 w-7 rounded-md text-neutral-300 ' +
+  'hover:text-white hover:bg-white/10 transition-colors text-sm leading-none';
 
+// Rendered inline inside the tile's control bar — never overlapping the
+// video. Twitch pauses embeds that are obscured by other page elements.
 export default function StreamControls({
   stream,
   onToggleMute,
@@ -23,7 +26,7 @@ export default function StreamControls({
   onPip,
 }: Props) {
   return (
-    <div className="tile-controls absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+    <div className="shrink-0 flex items-center gap-0.5">
       {onFocus && (
         <button className={btn} onClick={onFocus} title="Focus this stream" aria-label="Focus">
           ◎
@@ -34,17 +37,32 @@ export default function StreamControls({
           ⧉
         </button>
       )}
-      <button className={btn} onClick={onToggleHideVideo} title={stream.hideVideo ? 'Show video' : 'Hide video (keep audio)'} aria-label="Hide video">
+      <button
+        className={btn}
+        onClick={onToggleHideVideo}
+        title={stream.hideVideo ? 'Show video' : 'Hide video (keep audio)'}
+        aria-label="Hide video"
+      >
         {stream.hideVideo ? '👁' : '⦿'}
       </button>
-      <button className={btn} onClick={onToggleMute} title={stream.muted ? 'Unmute' : 'Mute'} aria-label="Mute">
+      <button
+        className={btn}
+        onClick={onToggleMute}
+        title={stream.muted ? 'Unmute' : 'Mute'}
+        aria-label="Mute"
+      >
         {stream.muted ? '🔇' : '🔊'}
       </button>
-      <button className={btn} onClick={onToggleMinimize} title={stream.minimized ? 'Restore' : 'Minimize'} aria-label="Minimize">
+      <button
+        className={btn}
+        onClick={onToggleMinimize}
+        title={stream.minimized ? 'Restore' : 'Minimize'}
+        aria-label="Minimize"
+      >
         {stream.minimized ? '▢' : '—'}
       </button>
       <button
-        className={btn + ' hover:!bg-red-600/80 hover:!border-red-400/40 hover:!text-white'}
+        className={btn + ' hover:!bg-red-600/80 hover:!text-white'}
         onClick={onClose}
         title="Close"
         aria-label="Close"
